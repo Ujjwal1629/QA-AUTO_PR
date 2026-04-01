@@ -32,7 +32,7 @@ jobs:
         run: npx playwright test --reporter=json 2>&1 | tee test-results/results.json
 
       - name: Analyze results and generate improvements
-        run: npx ts-node scripts/analyze-and-improve.ts
+        run: node scripts/analyze-and-improve.js
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
