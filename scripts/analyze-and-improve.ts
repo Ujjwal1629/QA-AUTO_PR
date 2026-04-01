@@ -206,18 +206,20 @@ async function callClaude(prompt: string): Promise<ImprovementResponse> {
 function applyImprovements(response: ImprovementResponse): string[] {
   const changedFiles: string[] = [];
 
-  for (const file of response.files) {
+  for (const file of (response.files ?? [])) {
+    if (!file.path || !file.content) continue;
     fs.writeFileSync(path.join(process.cwd(), file.path), file.content, 'utf-8');
     console.log(`  Updated: ${file.path}`);
     console.log(`  Changes: ${(file.changes ?? []).join(', ')}`);
     changedFiles.push(file.path);
   }
 
-  for (const file of response.newFiles) {
+  for (const file of (response.newFiles ?? [])) {
+    if (!file.path || !file.content) continue;
     const fullPath = path.join(process.cwd(), file.path);
     fs.mkdirSync(path.dirname(fullPath), { recursive: true });
     fs.writeFileSync(fullPath, file.content, 'utf-8');
-    console.log(`  Created: ${file.path} — ${file.rationale}`);
+    console.log(`  Created: ${file.path} — ${file.rationale ?? ''}`);
     changedFiles.push(file.path);
   }
 
@@ -266,7 +268,7 @@ ${improvements.summary}
 
 ### Changes Made
 
-${[...improvements.files, ...improvements.newFiles]
+${[...(improvements.files ?? []), ...(improvements.newFiles ?? [])]
   .map((f) => {
     if ('changes' in f) {
       return `**\`${f.path}\`**\n${(f.changes ?? []).map((c) => `- ${c}`).join('\n')}`;
