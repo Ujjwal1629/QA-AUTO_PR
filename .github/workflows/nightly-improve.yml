@@ -1,0 +1,47 @@
+name: AI Test Improvement
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 2am UTC every night
+  workflow_dispatch:        # Manual trigger — essential for demos
+
+jobs:
+  run-tests:
+    name: Run Tests & Capture Results
+    uses: ./.github/workflows/run-tests.yml
+
+  improve:
+    name: Analyze & Improve with Claude
+    needs: run-tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results-${{ github.run_id }}
+          path: test-results/
+
+      - name: Analyze results and generate improvements
+        run: npx ts-node scripts/analyze-and-improve.ts
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Create improvement PR
+        run: bash scripts/create-pr.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
