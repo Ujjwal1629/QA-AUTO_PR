@@ -209,7 +209,7 @@ function applyImprovements(response: ImprovementResponse): string[] {
   for (const file of response.files) {
     fs.writeFileSync(path.join(process.cwd(), file.path), file.content, 'utf-8');
     console.log(`  Updated: ${file.path}`);
-    console.log(`  Changes: ${file.changes.join(', ')}`);
+    console.log(`  Changes: ${(file.changes ?? []).join(', ')}`);
     changedFiles.push(file.path);
   }
 
@@ -269,7 +269,7 @@ ${improvements.summary}
 ${[...improvements.files, ...improvements.newFiles]
   .map((f) => {
     if ('changes' in f) {
-      return `**\`${f.path}\`**\n${f.changes.map((c) => `- ${c}`).join('\n')}`;
+      return `**\`${f.path}\`**\n${(f.changes ?? []).map((c) => `- ${c}`).join('\n')}`;
     } else {
       return `**\`${f.path}\`** *(new file)*\n- ${f.rationale}`;
     }
