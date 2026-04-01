@@ -185,6 +185,7 @@ async function callClaude(prompt: string): Promise<ImprovementResponse> {
     model: 'gpt-4o',
     max_tokens: 8096,
     temperature: 0.2,
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
@@ -197,19 +198,7 @@ async function callClaude(prompt: string): Promise<ImprovementResponse> {
 
   const rawContent = response.choices[0].message.content ?? '';
 
-  // Strip markdown code fences if the model wraps the JSON
-  const cleaned = rawContent.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
-
-  try {
-    return JSON.parse(cleaned) as ImprovementResponse;
-  } catch {
-    // Second attempt: extract the outermost JSON object
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (match) {
-      return JSON.parse(match[0]) as ImprovementResponse;
-    }
-    throw new Error(`Could not parse OpenAI response as JSON.\n\nRaw response:\n${rawContent}`);
-  }
+  return JSON.parse(rawContent) as ImprovementResponse;
 }
 
 // ─── Apply improvements ───────────────────────────────────────────────────────

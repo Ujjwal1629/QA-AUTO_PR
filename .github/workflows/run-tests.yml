@@ -41,6 +41,6 @@ jobs:
         id: upload
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ github.run_id }}
-          path: test-results/
+          name: test-results
+          path: test-results/results.json
           retention-days: 7
