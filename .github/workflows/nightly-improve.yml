@@ -6,13 +6,8 @@ on:
   workflow_dispatch:        # Manual trigger — essential for demos
 
 jobs:
-  run-tests:
-    name: Run Tests & Capture Results
-    uses: ./.github/workflows/run-tests.yml
-
   improve:
-    name: Analyze & Improve with Claude
-    needs: run-tests
+    name: Run Tests + Analyze & Improve with AI
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,11 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download test results
-        uses: actions/download-artifact@v4
-        with:
-          name: test-results
-          path: test-results/
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests (failures are data, not blockers)
+        continue-on-error: true
+        run: npx playwright test --reporter=json 2>&1 | tee test-results/results.json
 
       - name: Analyze results and generate improvements
         run: npx ts-node scripts/analyze-and-improve.ts
