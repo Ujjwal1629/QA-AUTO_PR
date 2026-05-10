@@ -2,47 +2,49 @@ import { test, expect } from '@playwright/test';
 
 // ---------------------------------------------------------------
 // NAVIGATION / CONTENT TESTS
-// Status: Passing but has ordering dependency and weak assertions
+// Status: Improved with better waits and assertions
 // ---------------------------------------------------------------
 
 test.describe('Site navigation', () => {
-  // Problem: no beforeEach — tests share state implicitly
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
 
   test('should load the API docs page', async ({ page }) => {
     await page.goto('/docs/api/class-page');
 
-    // Bad: arbitrary wait
-    await page.waitForTimeout(2500);
+    await page.waitForLoadState('networkidle');
 
-    // Weak: doesn't verify actual content loaded
-    expect(page.url()).toContain('docs');
+    const heading = page.locator('h1');
+    await expect(heading).toHaveText('API Documentation');
   });
 
   test('should navigate between sections', async ({ page }) => {
     await page.goto('/docs/intro');
 
-    await page.waitForTimeout(2000);
-
-    // Fragile: text-based selector will fail if copy changes
     const link = page.locator('text=Installation').first();
     await link.click();
 
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('networkidle');
 
-    // Missing: no assertion the page actually changed
-    expect(page.url()).toBeTruthy();
+    const newHeading = page.locator('h1');
+    await expect(newHeading).toHaveText('Installation');
   });
 
   test('should display code examples', async ({ page }) => {
     await page.goto('/docs/writing-tests');
 
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
-    // Missing test: never checks that code blocks are actually present
-    const heading = page.locator('h1');
-    await expect(heading).toBeVisible();
+    const codeBlock = page.locator('pre code');
+    await expect(codeBlock).toBeVisible();
 
-    // Gap: no test for copying code snippets
-    // Gap: no test for dark/light theme toggle
+    // New test for copying code snippets
+    const copyButton = page.locator('button', { hasText: 'Copy' });
+    await expect(copyButton).toBeVisible();
+
+    // New test for dark/light theme toggle
+    const themeToggle = page.locator('button', { hasText: 'Toggle Theme' });
+    await expect(themeToggle).toBeVisible();
   });
 });
